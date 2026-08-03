@@ -5,30 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debt-to-GDP Ratio Calculator</title>
     <style>
-        /* Notion Monotone Light Theme (Default) */
+        /* Strict Notion Monotone Dark Theme */
         :root {
-            --bg-color: #ffffff;
-            --card-bg: #f7f6f3;
-            --text-main: #37352f;
-            --text-muted: rgba(55, 53, 47, 0.65);
-            --border-color: rgba(55, 53, 47, 0.16);
-            --input-bg: #ffffff;
-            --badge-bg: rgba(55, 53, 47, 0.08);
-            --badge-text: #37352f;
+            --bg-color: #191919;                  /* Notion Dark Page BG */
+            --card-bg: #222222;                /* Notion Dark Block/Card BG */
+            --text-main: rgba(255, 255, 255, 0.9);/* Notion Primary White Text */
+            --text-muted: rgba(255, 255, 255, 0.45);/* Notion Muted Subtext */
+            --border-color: rgba(255, 255, 255, 0.1);/* Notion Subtle Border */
+            --border-hover: rgba(255, 255, 255, 0.25);
+            --input-bg: #191919;               /* Match Notion Input BG */
+            --badge-bg: rgba(255, 255, 255, 0.08); /* Neutral Tag BG */
+            --badge-text: rgba(255, 255, 255, 0.85);
         }
 
-        /* Notion Monotone Dark Theme */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #191919;
-                --card-bg: #202020;
-                --text-main: rgba(255, 255, 255, 0.9);
-                --text-muted: rgba(255, 255, 255, 0.55);
-                --border-color: rgba(255, 255, 255, 0.13);
-                --input-bg: #191919;
-                --badge-bg: rgba(255, 255, 255, 0.1);
-                --badge-text: rgba(255, 255, 255, 0.9);
-            }
+        /* Remove default browser accent blue colors */
+        * {
+            accent-color: var(--text-main);
+            box-sizing: border-box;
+        }
+
+        ::selection {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
         }
 
         body {
@@ -36,87 +34,92 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
-            padding: 2rem;
+            padding: 1rem;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            box-sizing: border-box;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
         .container {
             background-color: var(--card-bg);
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 1.75rem;
+            border-radius: 6px;
             width: 100%;
-            max-width: 480px;
+            max-width: 440px;
             border: 1px solid var(--border-color);
         }
 
         h1 {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 600;
             margin-top: 0;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
             text-align: center;
             color: var(--text-main);
             letter-spacing: -0.01em;
         }
 
         .input-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.1rem;
         }
 
         label {
             display: block;
-            margin-bottom: 0.4rem;
-            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+            font-size: 0.8rem;
             font-weight: 500;
             color: var(--text-muted);
         }
 
         input {
             width: 100%;
-            padding: 0.6rem 0.75rem;
+            padding: 0.55rem 0.7rem;
             border-radius: 4px;
             border: 1px solid var(--border-color);
             background-color: var(--input-bg);
             color: var(--text-main);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-family: inherit;
-            box-sizing: border-box;
+            outline: none;
             transition: border-color 0.15s ease;
         }
 
+        /* Replaces standard browser blue outline with neutral white border */
         input:focus {
-            outline: none;
-            border-color: var(--text-main);
+            border-color: var(--border-hover);
+            box-shadow: 0 0 0 1px var(--border-hover);
+        }
+
+        /* Chrome/Safari number input arrows styling */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            opacity: 0.4;
+            filter: invert(1);
         }
 
         .results {
-            margin-top: 1.75rem;
+            margin-top: 1.5rem;
             padding-top: 1.25rem;
             border-top: 1px solid var(--border-color);
             text-align: center;
         }
 
         .ratio-value {
-            font-size: 2.25rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: var(--text-main);
-            margin: 0.3rem 0;
+            margin: 0.2rem 0;
             letter-spacing: -0.02em;
         }
 
         .status {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 500;
-            padding: 0.2rem 0.6rem;
+            padding: 0.25rem 0.6rem;
             border-radius: 4px;
             display: inline-block;
-            margin-top: 0.5rem;
+            margin-top: 0.4rem;
             background-color: var(--badge-bg);
             color: var(--badge-text);
             border: 1px solid var(--border-color);
