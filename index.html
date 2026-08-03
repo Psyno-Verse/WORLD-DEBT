@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debt-to-GDP Ratio Calculator</title>
     <style>
-        /* Strict Notion Monotone Dark Theme */
+        /* Pure Notion Monotone Palette */
         :root {
-            --bg-color: #191919;                  /* Notion Dark Page BG */
-            --card-bg: #222222;                /* Notion Dark Block/Card BG */
-            --text-main: rgba(255, 255, 255, 0.9);/* Notion Primary White Text */
-            --text-muted: rgba(255, 255, 255, 0.45);/* Notion Muted Subtext */
-            --border-color: rgba(255, 255, 255, 0.1);/* Notion Subtle Border */
+            --bg-color: #191919;                   /* Notion Page Dark BG */
+            --card-bg: #222222;                 /* Notion Block/Card Dark BG */
+            --text-main: rgba(255, 255, 255, 0.9); /* Primary White Text */
+            --text-muted: rgba(255, 255, 255, 0.45);/* Muted Secondary Text */
+            --border-color: rgba(255, 255, 255, 0.1);/* Subtle Border */
             --border-hover: rgba(255, 255, 255, 0.25);
-            --input-bg: #191919;               /* Match Notion Input BG */
-            --badge-bg: rgba(255, 255, 255, 0.08); /* Neutral Tag BG */
+            --input-bg: #191919;                /* Input Match Page BG */
+            --badge-bg: rgba(255, 255, 255, 0.08); /* Monotone Tag BG */
             --badge-text: rgba(255, 255, 255, 0.85);
         }
 
-        /* Remove default browser accent blue colors */
+        /* Strip Default Blue Browser Accent Colors */
         * {
             accent-color: var(--text-main);
             box-sizing: border-box;
@@ -85,13 +85,12 @@
             transition: border-color 0.15s ease;
         }
 
-        /* Replaces standard browser blue outline with neutral white border */
+        /* Replace Standard Blue Focus Glow with Subtle White Outline */
         input:focus {
             border-color: var(--border-hover);
             box-shadow: 0 0 0 1px var(--border-hover);
         }
 
-        /* Chrome/Safari number input arrows styling */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             opacity: 0.4;
