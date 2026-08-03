@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debt-to-GDP Ratio Calculator</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Explicit UMD build for CDN compatibility -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         /* Light Theme (Default Notion Colors) */
         :root {
@@ -226,8 +227,9 @@
 <script>
     let chartInstance = null;
 
-    function getCssVar(varName) {
-        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    function getCssVar(varName, fallback) {
+        const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        return val || fallback;
     }
 
     function calculateData() {
@@ -260,6 +262,11 @@
     }
 
     function updateUI() {
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js failed to load.');
+            return;
+        }
+
         const data = calculateData();
         const initialRatio = data.ratioValues[0];
         const finalRatio = data.ratioValues[data.ratioValues.length - 1];
@@ -286,9 +293,9 @@
 
     function updateChart(data) {
         const ctx = document.getElementById('projectionChart').getContext('2d');
-        const gridColor = getCssVar('--chart-grid');
-        const textColor = getCssVar('--chart-text');
-        const blueAccent = getCssVar('--accent-blue');
+        const gridColor = getCssVar('--chart-grid', '#e9e9e8');
+        const textColor = getCssVar('--chart-text', '#787774');
+        const blueAccent = getCssVar('--accent-blue', '#2383e2');
 
         if (chartInstance) {
             chartInstance.destroy();
@@ -337,9 +344,7 @@
                 },
                 plugins: {
                     legend: {
-                        labels: {
-                            color: textColor
-                        }
+                        labels: { color: textColor }
                     }
                 },
                 scales: {
@@ -385,7 +390,8 @@
     // Dynamic Theme Listener
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateUI);
 
-    updateUI();
+    // Safely execute after DOM load
+    document.addEventListener('DOMContentLoaded', updateUI);
 </script>
 
 </body>
