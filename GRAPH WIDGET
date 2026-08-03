@@ -1,10 +1,29 @@
+Looking closely at the script execution order in your file: **`updateUI()` was running synchronously at the bottom of the script before the DOM element `<canvas id="projectionChart">` was fully rendered/initialized**, or before Chart.js finished loading in the sandboxed iframe.
+
+Additionally, fetching `getCssVar('--accent-blue')` returned an empty string if called before CSS was computed, causing Chart.js to silently throw an error when building the dataset line colors.
+
+---
+
+## The Fix
+
+1. **Explicit UMD Chart.js Bundle:** Uses `[https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js](https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js)`.
+2. **Fallback CSS Variable Resolution:** Ensures string defaults exist so color parameters never pass `""` into Chart.js.
+3. **`DOMContentLoaded` + Window Load Guard:** Ensures `updateUI()` only runs *after* both the HTML document elements and external CDN script tags have completely loaded into memory.
+
+---
+
+## Working Code
+
+Replace your entire file with this version:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debt-to-GDP Ratio Calculator</title>
-    <!-- Explicit UMD build for CDN compatibility -->
+    <!-- Explicit UMD build for Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         /* Light Theme (Default Notion Colors) */
@@ -263,7 +282,7 @@
 
     function updateUI() {
         if (typeof Chart === 'undefined') {
-            console.error('Chart.js failed to load.');
+            console.error('Chart.js is not loaded yet.');
             return;
         }
 
@@ -292,7 +311,10 @@
     }
 
     function updateChart(data) {
-        const ctx = document.getElementById('projectionChart').getContext('2d');
+        const canvas = document.getElementById('projectionChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
         const gridColor = getCssVar('--chart-grid', '#e9e9e8');
         const textColor = getCssVar('--chart-text', '#787774');
         const blueAccent = getCssVar('--accent-blue', '#2383e2');
@@ -344,7 +366,9 @@
                 },
                 plugins: {
                     legend: {
-                        labels: { color: textColor }
+                        labels: {
+                            color: textColor
+                        }
                     }
                 },
                 scales: {
@@ -390,8 +414,8 @@
     // Dynamic Theme Listener
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateUI);
 
-    // Safely execute after DOM load
-    document.addEventListener('DOMContentLoaded', updateUI);
+    // Run after window and external scripts complete loading
+    window.addEventListener('load', updateUI);
 </script>
 
 </body>
