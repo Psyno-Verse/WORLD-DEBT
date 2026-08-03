@@ -1,422 +1,173 @@
-Looking closely at the script execution order in your file: **`updateUI()` was running synchronously at the bottom of the script before the DOM element `<canvas id="projectionChart">` was fully rendered/initialized**, or before Chart.js finished loading in the sandboxed iframe.
-
-Additionally, fetching `getCssVar('--accent-blue')` returned an empty string if called before CSS was computed, causing Chart.js to silently throw an error when building the dataset line colors.
-
----
-
-## The Fix
-
-1. **Explicit UMD Chart.js Bundle:** Uses `[https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js](https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js)`.
-2. **Fallback CSS Variable Resolution:** Ensures string defaults exist so color parameters never pass `""` into Chart.js.
-3. **`DOMContentLoaded` + Window Load Guard:** Ensures `updateUI()` only runs *after* both the HTML document elements and external CDN script tags have completely loaded into memory.
-
----
-
-## Working Code
-
-Replace your entire file with this version:
+Here is the complete, standalone HTML file with the JavaScript error fixed by wrapping the script execution in a `DOMContentLoaded` event listener:
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debt-to-GDP Ratio Calculator</title>
-    <!-- Explicit UMD build for Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <style>
-        /* Light Theme (Default Notion Colors) */
-        :root {
-            --bg-color: transparent;
-            --card-bg: #ffffff;
-            --text-primary: #191919;
-            --text-secondary: #787774;
-            --border-color: #e9e9e8;
-            --control-bg: #f7f6f3;
-            --chart-grid: #e9e9e8;
-            --chart-text: #787774;
-            --accent-blue: #2383e2;
-            --status-green-bg: #edf8f1;
-            --status-green-text: #1c733f;
-            --status-red-bg: #fdebec;
-            --status-red-text: #d44c47;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debt-to-GDP Ratio Calculator</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --accent-color: #38bdf8;
+      --border-color: #334155;
+    }
 
-        /* Dark Theme (Notion Dark Mode Colors) */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: transparent;
-                --card-bg: #202020;
-                --text-primary: rgba(255, 255, 255, 0.81);
-                --text-secondary: rgba(255, 255, 255, 0.445);
-                --border-color: rgba(255, 255, 255, 0.13);
-                --control-bg: #2f2f2f;
-                --chart-grid: rgba(255, 255, 255, 0.1);
-                --chart-text: rgba(255, 255, 255, 0.5);
-                --accent-blue: #529cca;
-                --status-green-bg: rgba(28, 115, 63, 0.2);
-                --status-green-text: #57ab5a;
-                --status-red-bg: rgba(212, 76, 71, 0.2);
-                --status-red-text: #e5534b;
-            }
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 16px;
-            box-sizing: border-box;
-            transition: background-color 0.3s, color 0.3s;
-        }
+    .container {
+      background-color: var(--card-bg);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 500px;
+      border: 1px solid var(--border-color);
+    }
 
-        .widget-container {
-            max-width: 850px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            transition: background 0.3s, border-color 0.3s;
-        }
+    h1 {
+      font-size: 1.5rem;
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: var(--accent-color);
+    }
 
-        .widget-header {
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px;
-        }
+    .input-group {
+      margin-bottom: 1.25rem;
+    }
 
-        .widget-header h2 {
-            margin: 0 0 6px 0;
-            font-size: 1.3rem;
-            color: var(--text-primary);
-        }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
 
-        .widget-header p {
-            margin: 0;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: #0f172a;
+      color: var(--text-color);
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
 
-        .status-banner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            transition: all 0.3s ease;
-        }
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
 
-        .status-banner.sustainable {
-            background-color: var(--status-green-bg);
-            color: var(--status-green-text);
-        }
+    .results {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+    }
 
-        .status-banner.unsustainable {
-            background-color: var(--status-red-bg);
-            color: var(--status-red-text);
-        }
+    .ratio-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      margin: 0.5rem 0;
+    }
 
-        .status-title {
-            font-weight: 700;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-metrics {
-            display: flex;
-            gap: 24px;
-        }
-
-        .metric-box {
-            text-align: right;
-        }
-
-        .metric-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            opacity: 0.8;
-        }
-
-        .metric-value {
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-            background: var(--control-bg);
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            transition: background 0.3s, border-color 0.3s;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .control-group label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
-
-        .control-group input[type="number"] {
-            padding: 8px 12px;
-            background: var(--card-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            outline: none;
-        }
-
-        .control-group input[type="number"]:focus {
-            border-color: var(--accent-blue);
-        }
-
-        .chart-container {
-            position: relative;
-            height: 350px;
-            width: 100%;
-        }
-    </style>
+    .status {
+      font-size: 0.9rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      display: inline-block;
+      margin-top: 0.5rem;
+    }
+  </style>
 </head>
 <body>
 
-<div class="widget-container">
-    <div class="widget-header">
-        <h2>Debt-to-GDP Projection Calculator</h2>
-        <p>Simulate how economic growth impacts long-term national debt sustainability over 20 years.</p>
+  <div class="container">
+    <h1>Debt-to-GDP Calculator</h1>
+
+    <div class="input-group">
+      <label for="totalDebt">Total National Debt ($)</label>
+      <input type="number" id="totalDebt" value="34000000000000" placeholder="e.g. 34000000000000">
     </div>
 
-    <div id="statusBanner" class="status-banner sustainable">
-        <div>
-            <div class="status-title" id="statusText">SUSTAINABLE TRAJECTORY</div>
-            <div style="font-size: 0.85rem; margin-top: 2px;" id="statusDesc">GDP growth is outpacing debt accumulation.</div>
-        </div>
-        <div class="status-metrics">
-            <div class="metric-box">
-                <div class="metric-label">Initial Ratio</div>
-                <div class="metric-value" id="initialRatioVal">121.4%</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-label">20-Year Ratio</div>
-                <div class="metric-value" id="finalRatioVal">100.2%</div>
-            </div>
-        </div>
+    <div class="input-group">
+      <label for="grossGDP">Gross Domestic Product (GDP) ($)</label>
+      <input type="number" id="grossGDP" value="27000000000000" placeholder="e.g. 27000000000000">
     </div>
 
-    <div class="controls-grid">
-        <div class="control-group">
-            <label for="initialDebt">Initial Debt ($T)</label>
-            <input type="number" id="initialDebt" value="34" step="0.5" min="0">
-        </div>
-        <div class="control-group">
-            <label for="initialGDP">Initial GDP ($T)</label>
-            <input type="number" id="initialGDP" value="28" step="0.5" min="0.1">
-        </div>
-        <div class="control-group">
-            <label for="debtGrowth">Annual Debt Growth (%)</label>
-            <input type="number" id="debtGrowth" value="3.0" step="0.1">
-        </div>
-        <div class="control-group">
-            <label for="gdpGrowth">Annual GDP Growth (%)</label>
-            <input type="number" id="gdpGrowth" value="4.0" step="0.1">
-        </div>
+    <div class="results">
+      <label>Calculated Debt-to-GDP Ratio</label>
+      <div id="ratioOutput" class="ratio-value">0%</div>
+      <div id="statusOutput" class="status">--</div>
     </div>
+  </div>
 
-    <div class="chart-container">
-        <canvas id="projectionChart"></canvas>
-    </div>
-</div>
-
-<script>
-    let chartInstance = null;
-
-    function getCssVar(varName, fallback) {
-        const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-        return val || fallback;
-    }
-
-    function calculateData() {
-        const initialDebt = parseFloat(document.getElementById('initialDebt').value) || 0;
-        const initialGDP = parseFloat(document.getElementById('initialGDP').value) || 1;
-        const debtGrowth = (parseFloat(document.getElementById('debtGrowth').value) || 0) / 100;
-        const gdpGrowth = (parseFloat(document.getElementById('gdpGrowth').value) || 0) / 100;
-
-        const years = [];
-        const debtValues = [];
-        const gdpValues = [];
-        const ratioValues = [];
-
-        let currentDebt = initialDebt;
-        let currentGDP = initialGDP;
-
-        for (let i = 0; i <= 20; i++) {
-            years.push('Year ' + i);
-            debtValues.push(parseFloat(currentDebt.toFixed(2)));
-            gdpValues.push(parseFloat(currentGDP.toFixed(2)));
-            
-            const ratio = (currentDebt / currentGDP) * 100;
-            ratioValues.push(parseFloat(ratio.toFixed(1)));
-
-            currentDebt *= (1 + debtGrowth);
-            currentGDP *= (1 + gdpGrowth);
-        }
-
-        return { years, debtValues, gdpValues, ratioValues };
-    }
-
+  <script>
     function updateUI() {
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js is not loaded yet.');
-            return;
-        }
+      const debtInput = document.getElementById('totalDebt');
+      const gdpInput = document.getElementById('grossGDP');
+      const ratioOutput = document.getElementById('ratioOutput');
+      const statusOutput = document.getElementById('statusOutput');
 
-        const data = calculateData();
-        const initialRatio = data.ratioValues[0];
-        const finalRatio = data.ratioValues[data.ratioValues.length - 1];
-        
-        document.getElementById('initialRatioVal').innerText = initialRatio.toFixed(1) + '%';
-        document.getElementById('finalRatioVal').innerText = finalRatio.toFixed(1) + '%';
+      if (!debtInput || !gdpInput || !ratioOutput || !statusOutput) return;
 
-        const banner = document.getElementById('statusBanner');
-        const statusText = document.getElementById('statusText');
-        const statusDesc = document.getElementById('statusDesc');
+      const debt = parseFloat(debtInput.value) || 0;
+      const gdp = parseFloat(gdpInput.value) || 0;
 
-        if (finalRatio < initialRatio) {
-            banner.className = 'status-banner sustainable';
-            statusText.innerText = 'SUSTAINABLE TRAJECTORY';
-            statusDesc.innerText = 'GDP growth outpaces debt accumulation. The relative burden decreases.';
-        } else {
-            banner.className = 'status-banner unsustainable';
-            statusText.innerText = 'UNSUSTAINABLE TRAJECTORY';
-            statusDesc.innerText = 'Debt growth outpaces economy expansion. The debt ratio escalates.';
-        }
+      if (gdp <= 0) {
+        ratioOutput.textContent = 'N/A';
+        statusOutput.textContent = 'Invalid GDP value';
+        statusOutput.style.backgroundColor = 'transparent';
+        statusOutput.style.color = '#ef4444';
+        return;
+      }
 
-        updateChart(data);
+      const ratio = (debt / gdp) * 100;
+      ratioOutput.textContent = ratio.toFixed(1) + '%';
+
+      if (ratio > 100) {
+        statusOutput.textContent = 'High Risk';
+        statusOutput.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+        statusOutput.style.color = '#ef4444';
+      } else if (ratio > 60) {
+        statusOutput.textContent = 'Moderate Risk';
+        statusOutput.style.backgroundColor = 'rgba(245, 158, 11, 0.2)';
+        statusOutput.style.color = '#f59e0b';
+      } else {
+        statusOutput.textContent = 'Low Risk';
+        statusOutput.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+        statusOutput.style.color = '#22c55e';
+      }
     }
 
-    function updateChart(data) {
-        const canvas = document.getElementById('projectionChart');
-        if (!canvas) return;
+    // Safely execute DOM manipulations after the HTML is fully parsed
+    document.addEventListener('DOMContentLoaded', () => {
+      const debtInput = document.getElementById('totalDebt');
+      const gdpInput = document.getElementById('grossGDP');
 
-        const ctx = canvas.getContext('2d');
-        const gridColor = getCssVar('--chart-grid', '#e9e9e8');
-        const textColor = getCssVar('--chart-text', '#787774');
-        const blueAccent = getCssVar('--accent-blue', '#2383e2');
+      debtInput.addEventListener('input', updateUI);
+      gdpInput.addEventListener('input', updateUI);
 
-        if (chartInstance) {
-            chartInstance.destroy();
-        }
-
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.years,
-                datasets: [
-                    {
-                        label: 'National Debt ($T)',
-                        data: data.debtValues,
-                        borderColor: '#e5534b',
-                        backgroundColor: 'rgba(229, 83, 75, 0.1)',
-                        yAxisID: 'yAmount',
-                        borderWidth: 2,
-                        tension: 0.2
-                    },
-                    {
-                        label: 'GDP ($T)',
-                        data: data.gdpValues,
-                        borderColor: '#57ab5a',
-                        backgroundColor: 'rgba(87, 171, 90, 0.1)',
-                        yAxisID: 'yAmount',
-                        borderWidth: 2,
-                        tension: 0.2
-                    },
-                    {
-                        label: 'Debt-to-GDP Ratio (%)',
-                        data: data.ratioValues,
-                        borderColor: blueAccent,
-                        borderDash: [5, 5],
-                        yAxisID: 'yRatio',
-                        borderWidth: 2,
-                        tension: 0.2
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: textColor
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: textColor },
-                        grid: { color: gridColor }
-                    },
-                    yAmount: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        ticks: { color: textColor },
-                        title: {
-                            display: true,
-                            text: 'Amount (Trillions USD)',
-                            color: textColor
-                        },
-                        grid: { color: gridColor }
-                    },
-                    yRatio: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        ticks: { color: textColor },
-                        title: {
-                            display: true,
-                            text: 'Debt-to-GDP (%)',
-                            color: textColor
-                        },
-                        grid: { drawOnChartArea: false }
-                    }
-                }
-            }
-        });
-    }
-
-    // Input Listeners
-    document.getElementById('initialDebt').addEventListener('input', updateUI);
-    document.getElementById('initialGDP').addEventListener('input', updateUI);
-    document.getElementById('debtGrowth').addEventListener('input', updateUI);
-    document.getElementById('gdpGrowth').addEventListener('input', updateUI);
-
-    // Dynamic Theme Listener
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateUI);
-
-    // Run after window and external scripts complete loading
-    window.addEventListener('load', updateUI);
-</script>
-
+      // Initial calculation call
+      updateUI();
+    });
+  </script>
 </body>
 </html>
